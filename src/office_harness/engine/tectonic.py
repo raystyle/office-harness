@@ -5,6 +5,9 @@ Pitfalls learned on this machine (see room/office-mesh R-receipts):
 - bundle has no biber; biblatex backend=biber templates need a bibtex patch.
 - fonts are found by FILE (ctex fontsets) but not by NAME (fontspec on
   Windows fontconfig); templates should prefer system font names.
+- the bundle freezes at the TeXLive 2022 expl3 layer; templates written
+  against newer pregenerated variants (e.g. regex_split:nVN) need a compat
+  shim: cs_generate_variant:Nn on the FULL base signature (:nnN, not :nN).
 """
 
 from __future__ import annotations
