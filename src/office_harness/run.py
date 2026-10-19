@@ -55,11 +55,10 @@ def _face_or_dispatch(argv: list[str]) -> int:
             sys.stdout.write(cli.render_llms() + "\n")
         return EXIT_OK
     if _flag(argv, "--schema"):
-        target = scope or (rest[0] if rest else None)
         try:
-            envelope.print_json(cli.render_schema(target))
+            envelope.print_json(cli.render_schema(scope))
         except KeyError:
-            raise UsageError(f"unknown command for --schema: {target}") from None
+            raise UsageError(f"unknown command for --schema: {scope}") from None
         return EXIT_OK
     if _flag(argv, "--help") or _flag(argv, "-h"):
         sys.stdout.write(cli.render_help(scope) + "\n")
@@ -68,6 +67,10 @@ def _face_or_dispatch(argv: list[str]) -> int:
     # bare invocation: navigation event, not an error
     if not rest:
         sys.stdout.write(cli.render_bare() + "\n")
+        return EXIT_OK
+
+    if rest and rest[0] == "--version":
+        sys.stdout.write(cli.version() + "\n")
         return EXIT_OK
 
     g.command = rest[0]
