@@ -119,6 +119,44 @@ def test_fill_pptx_for_slide_duplication(tmp_path: Path, capsys) -> None:
     assert "{{for:" not in (prs_out.slides[0].notes_slide.notes_text_frame.text or "")
 
 
+def test_fill_reports_unresolved_and_formula_lint(tmp_path: Path, capsys) -> None:
+    tpl = tmp_path / "t.xlsx"
+    wb = __import__("openpyxl").Workbook()
+    ws = wb.active
+    ws["A1"] = "{{ known }}"
+    ws["A2"] = "{{ missing_key }}"
+    ws["B1"] = "=XLOOKUP(1, A:A, B:B)"
+    wb.save(str(tpl))
+    data = {"known": "v"}
+    dfile = tmp_path / "d.json"
+    dfile.write_text(json.dumps(data), encoding="utf-8")
+    out = tmp_path / "o.xlsx"
+    code = run.main(["fill", str(tpl), "--data", str(dfile), "--out", str(out), "--yes", "--json"])
+    payload = json.loads(capsys.readouterr().out)
+    assert code == 0
+    assert payload["data"]["unresolved"] == ["missing_key"]
+    assert any("XLOOKUP" in w for w in payload["data"]["formula_warnings"])
+
+
+def test_fill_pptx_reports_unresolved(tmp_path: Path, capsys) -> None:
+    from pptx import Presentation as Build
+    from pptx.util import Inches
+
+    tpl = tmp_path / "u.pptx"
+    prs = Build()
+    slide = prs.slides.add_slide(prs.slide_layouts[6])
+    box = slide.shapes.add_textbox(Inches(1), Inches(1), Inches(6), Inches(1))
+    box.text_frame.text = "{{ nope }}"
+    prs.save(str(tpl))
+    dfile = tmp_path / "d.json"
+    dfile.write_text(json.dumps({"x": 1}), encoding="utf-8")
+    out = tmp_path / "o.pptx"
+    code = run.main(["fill", str(tpl), "--data", str(dfile), "--out", str(out), "--yes", "--json"])
+    payload = json.loads(capsys.readouterr().out)
+    assert code == 0
+    assert payload["data"]["unresolved"] == ["nope"]
+
+
 def test_fill_dryrun_then_yes(tmp_path: Path, capsys) -> None:
     data = {"title": "t", "author": "a", "date": "d", "summary": "s", "tags": ["x"]}
     dfile = tmp_path / "d.json"

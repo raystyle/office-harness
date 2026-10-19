@@ -108,6 +108,18 @@ def _expand_for_slides(prs: Any, data: dict[str, Any]) -> int:
     return clones
 
 
+def _count_unresolved(prs: Any) -> list[str]:
+    """Leftover {{key}} anchors after filling — shipped-literal defect list."""
+    left: list[str] = []
+    for slide in prs.slides:
+        for shape in slide.shapes:
+            for tf in _iter_text_frames(shape):
+                for para in tf.paragraphs:
+                    full = "".join(run.text for run in para.runs)
+                    left.extend(_ANCHOR.findall(full))
+    return left
+
+
 def fill(template: str, data: dict[str, Any], out: str) -> dict[str, Any]:
     """Fill one pptx template; returns a report dict."""
     prs = Presentation(template)
@@ -117,10 +129,11 @@ def fill(template: str, data: dict[str, Any], out: str) -> dict[str, Any]:
         for shape in slide.shapes:
             for tf in _iter_text_frames(shape):
                 anchors += _apply_anchors(tf, data)
+    unresolved = _count_unresolved(prs)
     out_path = Path(out)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     prs.save(str(out_path))
-    return {
+    report: dict[str, Any] = {
         "engine": "python-pptx",
         "template": template,
         "out": str(out_path),
@@ -128,3 +141,6 @@ def fill(template: str, data: dict[str, Any], out: str) -> dict[str, Any]:
         "clones": clones,
         "bytes": out_path.stat().st_size,
     }
+    if unresolved:
+        report["unresolved"] = unresolved
+    return report
