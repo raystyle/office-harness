@@ -1,0 +1,17 @@
+{
+  "date": "2026-10-19",
+  "rows": [
+    "M1 骨架",
+    "M2 tex 线",
+    "M3 docx 线",
+    "M4 pptx+xlsx"
+  ],
+  "title": "office-harness 周报",
+  "notes": [
+    "全绿",
+    "闭环",
+    "验收过",
+    "验收过"
+  ],
+  "author": "claude-2"
+}

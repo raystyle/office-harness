@@ -1,0 +1,4 @@
+#!/bin/sh
+# pre-commit blocker (tri-state): delegates to the pwsh gate script
+pwsh -NoProfile -ExecutionPolicy Bypass -File "$(dirname "$0")/gates.ps1"
+exit $?
