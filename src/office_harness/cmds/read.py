@@ -36,7 +36,19 @@ def run(g: envelope.Globals, tokens: list[str]) -> int:
             g, report, human=lambda d: print(f"{len(hits)} hit(s) for {d['term']}")
         )
 
-    # extract (query lands with the mq docs; same reader op family)
+    if mode == "query":
+        if "--expr" not in opts:
+            raise OpError("usage", "query requires --expr (mq expression, e.g. .h2 or select(contains(x)))")
+        qcode, payload = reader.query(file, opts["--expr"])
+        report = {"mode": "query", "expr": opts["--expr"], "payload": payload}
+        results = payload.get("data", {}).get("results") or []
+        if qcode == 1 or not results:
+            raise MissError("no_hit", f"mq {opts['--expr']!r} matched nothing in {file}")
+        return envelope.finish(
+            g, report, human=lambda d: print(f"{len(results)} match(es) for {d['expr']}")
+        )
+
+    # extract
     payload = reader.extract(file)
     report = {"mode": "extract", "payload": payload}
     return envelope.finish(

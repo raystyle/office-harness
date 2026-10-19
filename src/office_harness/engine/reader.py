@@ -41,3 +41,12 @@ def search(file: str, term: str) -> dict[str, Any]:
     if code == 2:
         raise RuntimeError(err.strip() or "reader search failed")
     return json.loads(out)
+
+
+def query(file: str, expr: str) -> tuple[int, dict[str, Any]]:
+    """Reader mq query: returns (exit_code, payload); 0 hit / 1 miss / 2 error."""
+    binary = discover("reader", ENV)
+    code, out, err = run_plain(binary, ["query", file, expr, "--format", "json"], TIMEOUT_READ)
+    if code == 2:
+        raise RuntimeError(err.strip() or "reader query failed")
+    return code, json.loads(out)
