@@ -75,6 +75,50 @@ def test_fill_xlsx_anchor_and_rows(tmp_path: Path, capsys) -> None:
     assert [wso.cell(row=2 + i, column=1).value for i in range(3)] == [10, 20, 30]
 
 
+def test_fill_pptx_for_slide_duplication(tmp_path: Path, capsys) -> None:
+    from pptx import Presentation as Build
+    from pptx.util import Inches
+
+    tpl = tmp_path / "loop.pptx"
+    prs = Build()
+    slide = prs.slides.add_slide(prs.slide_layouts[6])
+    box1 = slide.shapes.add_textbox(Inches(1), Inches(1), Inches(6), Inches(1))
+    box1.text_frame.text = "{{ title }}"
+    box2 = slide.shapes.add_textbox(Inches(1), Inches(2), Inches(6), Inches(1))
+    box2.text_frame.text = "{{ name }} - {{ note }}"
+    slide.notes_slide.notes_text_frame.text = "{{for:modules}}"
+    prs.save(str(tpl))
+
+    data = {
+        "title": "模块巡礼",
+        "modules": [
+            {"name": "render", "note": "texenv"},
+            {"name": "compile", "note": "tectonic"},
+            {"name": "fill", "note": "四族"},
+        ],
+    }
+    dfile = tmp_path / "d.json"
+    dfile.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+    out = tmp_path / "o.pptx"
+    code = run.main(["fill", str(tpl), "--data", str(dfile), "--out", str(out), "--yes", "--json"])
+    payload = json.loads(capsys.readouterr().out)
+    assert code == 0
+    assert payload["data"]["clones"] == 3
+    prs_out = Presentation(str(out))
+    assert len(prs_out.slides._sldIdLst) == 4  # noqa: SLF001 - source + 3 clones
+    texts: list[str] = []
+    for s in prs_out.slides:
+        for shape in s.shapes:
+            if shape.has_text_frame:
+                texts.append(shape.text_frame.text)
+    assert "模块巡礼" in texts
+    assert "render - texenv" in texts
+    assert "compile - tectonic" in texts
+    assert "fill - 四族" in texts
+    # for-marker stripped from the source notes
+    assert "{{for:" not in (prs_out.slides[0].notes_slide.notes_text_frame.text or "")
+
+
 def test_fill_dryrun_then_yes(tmp_path: Path, capsys) -> None:
     data = {"title": "t", "author": "a", "date": "d", "summary": "s", "tags": ["x"]}
     dfile = tmp_path / "d.json"

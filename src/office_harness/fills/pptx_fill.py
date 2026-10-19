@@ -1,23 +1,26 @@
-"""pptx fill via python-pptx: {{key}} anchors rewritten over whole paragraphs.
+"""pptx fill via python-pptx: {{key}} anchors + {{for:name}} slide duplication.
 
 Design stance (industry lesson): jinja-in-pptx dies on PowerPoint's run
 splitting, so our templates own the runs — one ``{{key}}`` per shape. The
 rewriter joins each paragraph's runs, substitutes, then writes the result
 into the first run and blanks the rest, immune to how Word/PPT split runs.
 
-TODO(M4): ``{{for:name}}`` slide duplication per data row — python-pptx has
-no public slide-copy API; lands with its own tests.
+A slide whose notes contain ``{{for:name}}`` is duplicated once per item of
+``data[name]``; each copy's anchors resolve against the item (dict items
+merge over the global context, scalars are exposed as ``item``).
 """
 
 from __future__ import annotations
 
 import re
+from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
 from pptx import Presentation
 
 _ANCHOR = re.compile(r"\{\{\s*([a-zA-Z_][a-zA-Z0-9_.]*)\s*\}\}")
+_FOR = re.compile(r"\{\{\s*for:([a-zA-Z_][a-zA-Z0-9_]*)\s*\}\}")
 
 
 def _iter_text_frames(shape: Any) -> list[Any]:
@@ -60,9 +63,55 @@ def _apply_anchors(text_frame: Any, context: dict[str, Any]) -> int:
     return hits
 
 
+def _notes_text(slide: Any) -> str:
+    if not slide.has_notes_slide:
+        return ""
+    return slide.notes_slide.notes_text_frame.text or ""
+
+
+def _duplicate_slide(prs: Any, source: Any) -> Any:
+    """One slide clone: add_slide(same layout), then copy shape XML over."""
+    dest = prs.slides.add_slide(source.slide_layout)
+    for shp in list(dest.shapes):
+        shp._element.getparent().remove(shp._element)  # noqa: SLF001 - drop layout placeholders
+    for shp in source.shapes:
+        dest.shapes._spTree.append(deepcopy(shp._element))  # noqa: SLF001
+    return dest
+
+
+def _expand_for_slides(prs: Any, data: dict[str, Any]) -> int:
+    """Duplicate {{for:name}} slides per data row; returns clones added.
+
+    Clones append at the deck end in row order (v0.1 ordering contract).
+    Each clone's anchors resolve against its row (dict rows merge over the
+    global context; scalars are exposed as ``item``); the source slide keeps
+    its own anchors for the global context and loses the for-marker.
+    """
+    clones = 0
+    for slide in list(prs.slides):
+        m = _FOR.search(_notes_text(slide))
+        if not m:
+            continue
+        rows = data.get(m.group(1))
+        if not isinstance(rows, list) or not rows:
+            continue
+        for row in rows:
+            clone = _duplicate_slide(prs, slide)
+            clones += 1
+            ctx = {**data, **row} if isinstance(row, dict) else {**data, "item": row}
+            for shape in clone.shapes:
+                for tf in _iter_text_frames(shape):
+                    _apply_anchors(tf, ctx)
+        if slide.has_notes_slide:
+            ntf = slide.notes_slide.notes_text_frame
+            ntf.text = _FOR.sub("", ntf.text or "")
+    return clones
+
+
 def fill(template: str, data: dict[str, Any], out: str) -> dict[str, Any]:
     """Fill one pptx template; returns a report dict."""
     prs = Presentation(template)
+    clones = _expand_for_slides(prs, data)
     anchors = 0
     for slide in prs.slides:
         for shape in slide.shapes:
@@ -76,5 +125,6 @@ def fill(template: str, data: dict[str, Any], out: str) -> dict[str, Any]:
         "template": template,
         "out": str(out_path),
         "anchors": anchors,
+        "clones": clones,
         "bytes": out_path.stat().st_size,
     }
