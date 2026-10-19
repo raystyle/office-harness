@@ -157,6 +157,17 @@ def _registry() -> dict[str, Command]:
                 hints=("ro",),
             ),
             _leaf(
+                "recalc",
+                "Refresh xlsx formula caches by rewriting formulas (officecli evaluator)",
+                usage="recalc <file.xlsx> [--yes]",
+                args=({"name": "file", "required": True, "desc": ".xlsx/.xlsm path"},),
+                options=(OPT_YES,),
+                examples=(
+                    ("recalc report.xlsx --yes", "rewrite every formula so caches go live"),
+                ),
+                hints=("dryrun",),
+            ),
+            _leaf(
                 "doctor",
                 "Self-check engines (officecli/reader/tectonic) and libraries",
                 usage="doctor",

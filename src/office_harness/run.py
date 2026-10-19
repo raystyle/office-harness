@@ -33,6 +33,7 @@ from office_harness.cmds import doctor as cmddoctor
 from office_harness.cmds import fill as cmdfill
 from office_harness.cmds import inspect as cmdinspect
 from office_harness.cmds import read as cmdread
+from office_harness.cmds import recalc as cmdrecalc
 from office_harness.cmds import render as cmdrender
 from office_harness.envelope import EXIT_MISS, EXIT_OK, EXIT_USAGE, UsageError
 
@@ -85,6 +86,7 @@ _DISPATCH = {
     "compile": cmdcompile.run,
     "fill": cmdfill.run,
     "read": cmdread.run,
+    "recalc": cmdrecalc.run,
     "inspect": cmdinspect.run,
     "doctor": cmddoctor.run,
 }
