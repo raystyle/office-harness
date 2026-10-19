@@ -39,6 +39,15 @@ def fake_engine(monkeypatch: pytest.MonkeyPatch) -> FakeExecute:
     return fx
 
 
+@pytest.fixture()
+def pandoc_stub(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    """A fake pandoc binary so the discovery ladder never touches the machine."""
+    stub = tmp_path / "pandoc.exe"
+    stub.write_bytes(b"stub")
+    monkeypatch.setenv("PANDOC_BIN", str(stub))
+    return stub
+
+
 def envelope_ok(data: Any = None) -> str:
     import json
 

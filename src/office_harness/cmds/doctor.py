@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from office_harness import envelope
-from office_harness.engine import officecli, reader, tectonic
+from office_harness.engine import officecli, pandoc, reader, tectonic
 
 
 def _lib_version(modname: str) -> tuple[str | None, str | None]:
@@ -22,7 +22,7 @@ def run(g: envelope.Globals, tokens: list[str]) -> int:
     if tokens:
         raise ValueError("doctor takes no arguments")
     engines = []
-    for probe in (officecli.status, reader.status, tectonic.status):
+    for probe in (officecli.status, reader.status, tectonic.status, pandoc.status):
         st = probe()
         engines.append(
             {

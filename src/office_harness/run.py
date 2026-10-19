@@ -29,6 +29,7 @@ _force_utf8()
 from office_harness import cli, envelope
 from office_harness.cmds import common as cmdcommon
 from office_harness.cmds import compile as cmdcompile
+from office_harness.cmds import convert as cmdconvert
 from office_harness.cmds import doctor as cmddoctor
 from office_harness.cmds import fill as cmdfill
 from office_harness.cmds import inspect as cmdinspect
@@ -87,6 +88,7 @@ def _flag(argv: list[str], flag: str) -> bool:
 _DISPATCH = {
     "render": cmdrender.run,
     "compile": cmdcompile.run,
+    "convert": cmdconvert.run,
     "fill": cmdfill.run,
     "read": cmdread.run,
     "recalc": cmdrecalc.run,

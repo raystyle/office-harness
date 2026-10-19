@@ -168,6 +168,29 @@ def _registry() -> dict[str, Command]:
                 hints=("dryrun",),
             ),
             _leaf(
+                "convert",
+                "Convert markdown to docx or pdf via pandoc, pdf via the tectonic engine",
+                usage="convert <file.md> --to docx|pdf [--out <file>] [--pdf-engine <e>] [--yes]",
+                args=({"name": "file", "required": True, "desc": "markdown (gfm) source path"},),
+                options=(
+                    Opt("--to", "<fmt>", "target format", enum=("docx", "pdf")),
+                    Opt("--out", "<file>", "output path (default: same stem, new suffix)"),
+                    Opt("--pdf-engine", "<e>", "pandoc pdf backend", default="tectonic"),
+                    Opt(
+                        "--cjk-font",
+                        "<font>",
+                        "CJK main font for pdf when the source carries CJK",
+                        default="Microsoft YaHei",
+                    ),
+                    OPT_YES,
+                ),
+                examples=(
+                    ("convert report.md --to docx --yes", "Word document next to the source"),
+                    ("convert report.md --to pdf --yes", "PDF compiled by tectonic"),
+                ),
+                hints=("dryrun",),
+            ),
+            _leaf(
                 "doctor",
                 "Self-check engines (officecli/reader/tectonic) and libraries",
                 usage="doctor",
