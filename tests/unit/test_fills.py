@@ -1,0 +1,88 @@
+"""Library fill layer tests over real template files (no engine involved)."""
+
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+from openpyxl import load_workbook
+from pptx import Presentation
+
+from office_harness import run
+
+TEMPLATES = Path(__file__).resolve().parents[2] / "templates"
+
+
+def test_fill_docx_real_template(tmp_path: Path, capsys) -> None:
+    data = {
+        "title": "office-harness 周报",
+        "author": "claude-2",
+        "date": "2026-10-19",
+        "summary": "M3 docx 线验收。",
+        "tags": ["M1", "M2", "M3"],
+    }
+    dfile = tmp_path / "d.json"
+    dfile.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+    out = tmp_path / "o.docx"
+    code = run.main(
+        ["fill", str(TEMPLATES / "docx" / "report.docx"), "--data", str(dfile),
+         "--out", str(out), "--yes", "--json"]
+    )
+    payload = json.loads(capsys.readouterr().out)
+    assert code == 0
+    assert payload["data"]["engine"] == "docxtpl"
+    assert out.exists() and out.stat().st_size > 0
+
+
+def test_fill_pptx_real_template(tmp_path: Path, capsys) -> None:
+    data = {"title": "office-mesh 结网汇报", "speaker": "lan-win-claude-2", "date": "2026-10-19"}
+    dfile = tmp_path / "d.json"
+    dfile.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+    out = tmp_path / "o.pptx"
+    code = run.main(
+        ["fill", str(TEMPLATES / "pptx" / "deck.pptx"), "--data", str(dfile),
+         "--out", str(out), "--yes", "--json"]
+    )
+    payload = json.loads(capsys.readouterr().out)
+    assert code == 0
+    assert payload["data"]["anchors"] >= 2
+    prs = Presentation(str(out))
+    texts = [s.text_frame.text for s in prs.slides[0].shapes if s.has_text_frame]
+    joined = "\n".join(texts)
+    assert "office-mesh 结网汇报" in joined
+    assert "lan-win-claude-2" in joined
+
+
+def test_fill_xlsx_anchor_and_rows(tmp_path: Path, capsys) -> None:
+    tpl = tmp_path / "t.xlsx"
+    wb = __import__("openpyxl").Workbook()
+    ws = wb.active
+    ws["A1"] = "{{ name }}"
+    ws["B1"] = "{{ visits }}"
+    ws["A2"] = "{{ series }}"
+    wb.save(str(tpl))
+    data = {"name": "office-harness", "visits": 42, "series": [10, 20, 30]}
+    dfile = tmp_path / "d.json"
+    dfile.write_text(json.dumps(data), encoding="utf-8")
+    out = tmp_path / "o.xlsx"
+    code = run.main(["fill", str(tpl), "--data", str(dfile), "--out", str(out), "--yes", "--json"])
+    capsys.readouterr()
+    assert code == 0
+    wbo = load_workbook(str(out))
+    wso = wbo.active
+    assert wso["A1"].value == "office-harness"
+    assert wso["B1"].value == 42
+    assert [wso.cell(row=2 + i, column=1).value for i in range(3)] == [10, 20, 30]
+
+
+def test_fill_dryrun_then_yes(tmp_path: Path, capsys) -> None:
+    data = {"title": "t", "author": "a", "date": "d", "summary": "s", "tags": ["x"]}
+    dfile = tmp_path / "d.json"
+    dfile.write_text(json.dumps(data), encoding="utf-8")
+    tpl = str(TEMPLATES / "docx" / "report.docx")
+    code = run.main(["fill", tpl, "--data", str(dfile), "--json", "--full-output"])
+    payload = json.loads(capsys.readouterr().out)
+    assert code == 0
+    assert payload["data"]["dryrun"] is True
+    assert payload["meta"]["cta"]["commands"][0]["command"].endswith("--yes")
+

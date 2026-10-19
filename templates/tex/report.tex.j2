@@ -1,0 +1,30 @@
+\documentclass[UTF8]{article}
+\usepackage{xeCJK}
+\setCJKmainfont{Microsoft YaHei}
+\begin{document}
+\section{\VAR{title | tex}}
+%- if subtitle
+\emph{\VAR{subtitle | tex}}
+%- endif
+
+\VAR{author | tex} \quad \VAR{date | tex}
+
+\subsection{概要}
+\VAR{summary | tex}
+
+\subsection{要点}
+\begin{itemize}
+\BLOCK{for item in items}
+  \item \VAR{item | tex}
+\BLOCK{endfor}
+\end{itemize}
+
+\subsection{数据表}
+\begin{tabular}{lr}
+\hline
+\BLOCK{for row in table}
+\VAR{row[0] | tex} & \VAR{row[1]} \\
+\BLOCK{endfor}
+\hline
+\end{tabular}
+\end{document}

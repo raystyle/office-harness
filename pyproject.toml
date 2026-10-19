@@ -1,0 +1,59 @@
+[project]
+name = "office-harness"
+version = "0.1.0"
+description = "Document pipeline CLI harness: jinja templates x office libraries, orchestrated over officecli/reader/tectonic engines"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "pydantic>=2.7",
+    "jinja2>=3.1",
+    "docxtpl>=0.16",
+    "python-pptx>=1.0",
+    "openpyxl>=3.1",
+    "pyyaml>=6.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9",
+    "ruff>=0.16",
+    "ty>=0.0.84",
+]
+
+[project.scripts]
+office-harness = "office_harness.run:main"
+
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+office_harness = ["templates/**/*"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 110
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "D"]
+ignore = ["D203", "D213"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["D"]
+"src/office_harness/run.py" = ["E402"]  # UTF-8 reconfigure MUST precede imports
+
+[tool.ty.src]
+include = ["src"]
+
+[tool.ty.environment]
+python-platform = "windows"

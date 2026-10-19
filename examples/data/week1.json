@@ -1,0 +1,26 @@
+{
+  "author": "lan-win-claude-2",
+  "summary": "harness 本体落地:M1 骨架(注册表/信封/引擎客户端/28 测试)通过全部三闸。",
+  "date": "2026-10-19",
+  "table": [
+    [
+      "里程碑",
+      "M1"
+    ],
+    [
+      "测试",
+      "28 passed"
+    ],
+    [
+      "闸门",
+      "ruff+ty+pytest"
+    ]
+  ],
+  "title": "office-harness 首份周报 & 里程碑",
+  "subtitle": "M1 骨架_三闸全绿",
+  "items": [
+    "注册表驱动三面同源:--help/--llms/--schema 零漂移",
+    "引擎客户端:线协议看 stdout 形,超时表,发现梯",
+    "texenv:LaTeX 安全定界符,单遍转义"
+  ]
+}
