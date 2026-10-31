@@ -48,6 +48,33 @@ def pandoc_stub(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     return stub
 
 
+@pytest.fixture()
+def wavo_stub(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    """A fake wavo binary so the discovery ladder never touches the machine."""
+    stub = tmp_path / "wavo.exe"
+    stub.write_bytes(b"stub")
+    monkeypatch.setenv("WAVO_BIN", str(stub))
+    return stub
+
+
+@pytest.fixture()
+def svgtools_stub(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    """A fake agent-svgtools binary for the discovery ladder."""
+    stub = tmp_path / "agent-svgtools.exe"
+    stub.write_bytes(b"stub")
+    monkeypatch.setenv("AGENT_SVGTOOLS_BIN", str(stub))
+    return stub
+
+
+@pytest.fixture()
+def oxvg_stub(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    """A fake oxvg binary for the discovery ladder."""
+    stub = tmp_path / "oxvg.exe"
+    stub.write_bytes(b"stub")
+    monkeypatch.setenv("OXVG_BIN", str(stub))
+    return stub
+
+
 def envelope_ok(data: Any = None) -> str:
     import json
 

@@ -11,6 +11,7 @@ dependencies = [
     "python-pptx>=1.0",
     "openpyxl>=3.1",
     "pyyaml>=6.0",
+    "svg-py>=1.10.0",
 ]
 
 [dependency-groups]
@@ -18,6 +19,10 @@ dev = [
     "pytest>=9",
     "ruff>=0.16",
     "ty>=0.0.84",
+    "weasyprint>=61",
+    "pypdf>=4",
+    "pymupdf>=1.24",
+    "pygments>=2.17",
 ]
 
 [project.scripts]
@@ -43,6 +48,8 @@ testpaths = ["tests"]
 [tool.ruff]
 line-length = 110
 target-version = "py312"
+# assets/kami 是 vendored 上游(MIT,保持原样以便对照升级),不参与本仓 lint
+extend-exclude = ["assets/kami"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "B", "UP", "D"]

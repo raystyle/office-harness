@@ -56,8 +56,9 @@ def test_convert_pdf_passes_pdf_engine(fake_engine, pandoc_stub, tmp_path: Path,
     payload = json.loads(capsys.readouterr().out)
     assert code == 0
     assert payload["data"]["pdf_engine"] == "tectonic"
-    argv = " ".join(fake_engine.calls[0])
-    # named engine resolves to an absolute path (pandoc PATH may lack it)
+    argv = " ".join(fake_engine.calls[0]).lower()
+    # named engine resolves to an absolute path (pandoc PATH may lack it);
+    # case-insensitive: which() may surface tectonic.EXE on some machines
     assert "--pdf-engine" in argv and "tectonic.exe" in argv
-    # CJK source triggers the CJK main-font variable
-    assert "-V CJKmainfont=Microsoft YaHei" in argv
+    # CJK source triggers the CJK main-font variable (case-insensitive, see above)
+    assert "-v cjkmainfont=microsoft yahei" in argv

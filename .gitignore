@@ -9,3 +9,4 @@ examples/out/
 dist/
 build/
 *.egg-info/
+project/

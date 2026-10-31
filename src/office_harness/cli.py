@@ -23,6 +23,9 @@ _ENV_VARS: dict[str, str] = {
     "OFFICECLI_BIN": "officecli binary override (discovery ladder: env -> PATH -> ohmyenv)",
     "READER_BIN": "reader binary override (same ladder)",
     "TECTONIC_BIN": "tectonic binary override (same ladder)",
+    "WAVO_BIN": "wavo binary override (same ladder)",
+    "AGENT_SVGTOOLS_BIN": "agent-svgtools binary override (same ladder)",
+    "OXVG_BIN": "oxvg binary override (same ladder)",
 }
 
 
@@ -191,8 +194,78 @@ def _registry() -> dict[str, Command]:
                 hints=("dryrun",),
             ),
             _leaf(
+                "transcribe",
+                "Transcribe an audio file to srt/plain text via the wavo engine",
+                usage=(
+                    "transcribe <file> [--model <m>] [--segment <secs>]"
+                    " [--to srt|text|json] [--out <f>] [--yes]"
+                ),
+                args=({"name": "file", "required": True, "desc": "audio path (wav/mp3/m4a/flac/ogg)"},),
+                options=(
+                    Opt("--model", "<m>", "wavo model name (must be pulled first)", default="whisper-turbo"),
+                    Opt(
+                        "--segment",
+                        "<secs>",
+                        "split at pauses into parts up to secs (whisper: 30)",
+                        default="30",
+                    ),
+                    Opt(
+                        "--to",
+                        "<fmt>",
+                        "target format",
+                        enum=("srt", "text", "json"),
+                        default="srt",
+                    ),
+                    Opt("--out", "<file>", "output path (default: same stem, .srt/.txt/.json)"),
+                    Opt("--pull", None, "auto-download a missing model (network, wavo -y)"),
+                    OPT_YES,
+                ),
+                examples=(
+                    ("transcribe meeting.m4a --yes", "writes meeting.srt next to the source"),
+                    ("transcribe meeting.m4a --format text --yes", "plain text, no timestamps"),
+                ),
+                hints=("dryrun",),
+            ),
+            _leaf(
+                "svg",
+                "SVG toolchain: build structured SVG, judge vs a reference raster, optimise via oxvg",
+                usage="svg <build|judge|optimise> [options]",
+                options=(
+                    Opt("--data", "<file>", "json/yaml spec file (build); see docs for the schema"),
+                    Opt("--out", "<file>", "output svg path (build/optimise)"),
+                    Opt("--ref", "<image>", "reference raster png/jpg (judge)"),
+                    Opt("--diff-image", "<png>", "judge: write a diff heatmap png"),
+                    Opt("--threshold", "<n>", "judge: exit 1 below this combined score (0-100)", default="0"),
+                    Opt("--in-place", None, "optimise: overwrite the input file"),
+                    Opt("--yes", None, "apply for real (default is a dry-run report)"),
+                ),
+                examples=(
+                    ("svg build --data diagram.json --out diagram.svg --yes", "structured spec to svg"),
+                    ("svg judge --ref logo.png diagram.svg", "pixel match + ssim score vs reference"),
+                    ("svg optimise diagram.svg --in-place --yes", "oxvg optimise, overwrite input"),
+                ),
+                hints=("dryrun",),
+            ),
+            _leaf(
+                "kami",
+                "Kami paper typesetting: fill vendored templates, render PDF natively (weasyprint)",
+                usage="kami <build|render|check> [options]",
+                options=(
+                    Opt("--data", "<file>", "json fills spec (build): {placeholder: [values in order]}"),
+                    Opt("--out", "<file>", "output path (build: html; render: pdf)"),
+                    Opt("--pages", None, "render: also export per-page PNGs"),
+                    Opt("--content", "<file>", "check: content.json for coverage validation"),
+                    OPT_YES,
+                ),
+                examples=(
+                    ("kami build one-pager.html --data fills.json --yes", "fill placeholders in order"),
+                    ("kami render doc.html --pages --yes", "native PDF + page images"),
+                ),
+                hints=("dryrun",),
+            ),
+            _leaf(
                 "doctor",
-                "Self-check engines (officecli/reader/tectonic) and libraries",
+                "Self-check engines (officecli/reader/tectonic/pandoc/wavo) and libraries",
                 usage="doctor",
                 options=(),
                 examples=(
@@ -314,9 +387,11 @@ def render_llms() -> str:
         lines.append(c.summary)
         if c.usage:
             lines.append(f"  用法: {CLI_NAME} {c.usage}")
-        for o in c.options:
-            val = f" {o.val}" if o.val else ""
-            lines.append(f"  {o.flag}{val} — {o.desc}")
+        if c.options:
+            shown_flags = "; ".join(
+                o.flag + (f" {o.val}" if o.val else "") for o in c.options
+            )
+            lines.append(f"  旗标: {shown_flags} (说明见 --help)")
         lines.append("")
     lines += [
         "## 退出码",

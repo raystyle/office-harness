@@ -33,9 +33,12 @@ from office_harness.cmds import convert as cmdconvert
 from office_harness.cmds import doctor as cmddoctor
 from office_harness.cmds import fill as cmdfill
 from office_harness.cmds import inspect as cmdinspect
+from office_harness.cmds import kami as cmdkami
 from office_harness.cmds import read as cmdread
 from office_harness.cmds import recalc as cmdrecalc
 from office_harness.cmds import render as cmdrender
+from office_harness.cmds import svg as cmdsvg
+from office_harness.cmds import transcribe as cmdtranscribe
 from office_harness.envelope import EXIT_MISS, EXIT_OK, EXIT_USAGE, UsageError
 
 
@@ -93,6 +96,9 @@ _DISPATCH = {
     "read": cmdread.run,
     "recalc": cmdrecalc.run,
     "inspect": cmdinspect.run,
+    "transcribe": cmdtranscribe.run,
+    "svg": cmdsvg.run,
+    "kami": cmdkami.run,
     "doctor": cmddoctor.run,
 }
 
